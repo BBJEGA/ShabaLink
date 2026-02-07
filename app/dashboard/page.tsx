@@ -1,6 +1,8 @@
 
 import WalletCard from '../components/WalletCard';
 import ServiceCard from '../components/ServiceCard';
+import WelcomeHeader from '../components/WelcomeHeader';
+import BankDetails from '../components/BankDetails';
 
 const services = [
     {
@@ -60,11 +62,8 @@ export default function Dashboard() {
             </header>
 
             <div className="p-4">
-                <div className="mb-2">
-                    <p className="text-gray-500 text-sm">Welcome back,</p>
-                    <h2 className="text-xl font-bold text-gray-900">User</h2>
-                </div>
-
+                <WelcomeHeader />
+                <BankDetails />
                 <WalletCard />
 
                 <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wider">Services</h3>
