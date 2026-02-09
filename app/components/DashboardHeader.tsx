@@ -27,11 +27,16 @@ export default function DashboardHeader({ userEmail, fullName }: DashboardHeader
     return (
         <header className="bg-white p-4 flex justify-between items-center sticky top-0 z-20 shadow-sm">
             <h1 className="text-xl font-bold text-indigo-600">Shabalink</h1>
-            <Link href="/profile">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm cursor-pointer hover:bg-indigo-200 transition-colors border border-indigo-200">
-                    {getInitials()}
-                </div>
-            </Link>
+            <div className="flex items-center gap-4">
+                <Link href="/dashboard/membership" className="text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
+                    Membership
+                </Link>
+                <Link href="/profile">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm cursor-pointer hover:bg-indigo-200 transition-colors border border-indigo-200">
+                        {getInitials()}
+                    </div>
+                </Link>
+            </div>
         </header>
     );
 }
