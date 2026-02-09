@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { validateVtuRequest } from '../../utils';
+import { validateVtuRequest } from '../utils';
 import { isquare } from '@/lib/isquare';
 import { createClient } from '@/utils/supabase/server';
 import { calculateVtuPrice } from '@/utils/pricing';
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     if (validation.error) {
         return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
-    const { user, profile, supabase } = validation;
+    const { user, profile, supabase } = validation as any;
 
     // 2. Calculate Pricing
     const pricing = calculateVtuPrice(faceValue, 'airtime', profile.role || 'customer');

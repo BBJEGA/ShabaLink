@@ -12,7 +12,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Invalid service type' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // 1. Get User Role
     // We default to 'customer' if not logged in or no profile found
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
     try {
         // 2. Fetch Base Plans from Provider
-        const plans = await isquare.getServices(type as any);
+        const plans = (await isquare.getServices(type as any)) as any[];
 
         // 3. Apply Pricing Logic
         const pricedPlans = plans.map(plan => {

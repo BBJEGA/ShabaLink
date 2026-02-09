@@ -17,7 +17,7 @@ export async function validateVtuRequest(amount: number, pin: string) {
     // 2. Fetch Profile (Balance & PIN)
     const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('wallet_balance, transaction_pin')
+        .select('wallet_balance, transaction_pin, role')
         .eq('id', user.id)
         .single();
 
