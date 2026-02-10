@@ -6,7 +6,12 @@ import { calculateVtuPrice, ServiceType, UserTier } from '@/utils/pricing';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type') as ServiceType;
     const serviceId = searchParams.get('service_id');
+
+    if (!['data', 'cable', 'electricity'].includes(type)) {
+        return NextResponse.json({ error: 'Invalid service type' }, { status: 400 });
+    }
 
     const supabase = await createClient();
 
@@ -33,7 +38,7 @@ export async function GET(request: Request) {
         const plans = Array.isArray(response) ? response : (response.data || response.variations || []);
 
         // 3. Apply Pricing Logic
-        const pricedPlans = plans.map((plan: any) => {
+        const pricedPlans = plans.map((plan: Record<string, unknown>) => {
             const cost = Number(plan.amount || plan.price || plan.cost) || 0;
             if (cost === 0) return plan;
 

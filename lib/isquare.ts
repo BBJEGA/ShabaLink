@@ -11,7 +11,7 @@ const ISQUARE_API_BASE = 'https://isquaredata.com/api';
 interface APIResponse {
     status: string | boolean;
     message?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export class ISquareClient {
@@ -24,9 +24,9 @@ export class ISquareClient {
         this.baseUrl = ISQUARE_API_BASE;
     }
 
-    private async request(endpoint: string, method: 'GET' | 'POST', body?: any): Promise<APIResponse> {
+    private async request(endpoint: string, method: 'GET' | 'POST', body?: Record<string, unknown>): Promise<APIResponse> {
         const url = `${this.baseUrl}${endpoint}`;
-        const headers: any = {
+        const headers: Record<string, string> = {
             'Content-Type': 'application/json',
         };
 
@@ -58,9 +58,10 @@ export class ISquareClient {
             }
 
             return data;
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Connection to provider failed';
             console.error(`ISquare API Exception [${endpoint}]:`, error);
-            throw new Error(error.message || 'Connection to provider failed');
+            throw new Error(errorMessage);
         }
     }
 

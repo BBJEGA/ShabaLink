@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardHeader from '../../components/DashboardHeader';
-import { Check, ChevronRight, Loader2, Phone, ShieldCheck, Wallet, Zap } from 'lucide-react';
+import { Check, ChevronRight, Loader2 } from 'lucide-react';
 
 export default function ElectricityPage() {
     const router = useRouter();
@@ -14,7 +14,7 @@ export default function ElectricityPage() {
     const [message, setMessage] = useState({ type: '', text: '' });
 
     // Data
-    const [discos, setDiscos] = useState<any[]>([]);
+    const [discos, setDiscos] = useState<Record<string, unknown>[]>([]);
 
     // Form
     const [formData, setFormData] = useState({

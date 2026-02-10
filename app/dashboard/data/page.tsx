@@ -15,10 +15,12 @@ export default function BuyDataPage() {
     const [message, setMessage] = useState({ type: '', text: '' });
 
     // Data
-    const [allPlans, setAllPlans] = useState<any[]>([]);
-    const [availablePlans, setAvailablePlans] = useState<any[]>([]);
-    const [networks, setNetworks] = useState<any[]>(NETWORKS); // Initial list
-    const [fetching, setFetching] = useState(false);
+    const [availablePlans, setAvailablePlans] = useState<Record<string, any>[]>([]);
+    // We use any for plan objects because they vary widely by provider, 
+    // but the array itself is typed. Actually let's use Record<string, unknown> if possible.
+    // However, plan.id and plan.amount are used.
+    // For now, let's use a simple interface or stay with what works.
+
 
     // Form
     const [formData, setFormData] = useState({

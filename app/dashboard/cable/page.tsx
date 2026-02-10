@@ -14,8 +14,8 @@ export default function CablePage() {
     const [fetchingPlans, setFetchingPlans] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
-    const [allPlans, setAllPlans] = useState<any[]>([]);
-    const [availablePlans, setAvailablePlans] = useState<any[]>([]);
+    const [allPlans, setAllPlans] = useState<Record<string, any>[]>([]);
+    const [availablePlans, setAvailablePlans] = useState<Record<string, any>[]>([]);
 
     const [formData, setFormData] = useState({
         cable_id: '',
