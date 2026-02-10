@@ -31,18 +31,18 @@ export default function CablePage() {
         setFetchingPlans(true);
         fetch('/api/vtu/plans?type=cable')
             .then(res => res.json())
-            .then(json => { if (json.success) setAllPlans(json.data); })
+            .then(json => {
+                if (json.success) setAllPlans(json.data);
+            })
             .finally(() => setFetchingPlans(false));
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-
         if (name === 'cable_id') {
-            const filtered = allPlans.filter(p => (p.cable_id || p.service_id) === value);
-            setAvailablePlans(filtered);
-            setFormData(prev => ({ ...prev, plan_id: '', cable_id: value }));
+            setFormData(prev => ({ ...prev, plan_id: '', amount: 0 }));
+            setAvailablePlans([]);
         }
     };
 
@@ -62,18 +62,25 @@ export default function CablePage() {
             const data = await res.json();
             if (data.success) {
                 setFormData(prev => ({ ...prev, customer_name: data.data?.name || data.data?.customer_name || 'Verified User' }));
-                setStep(2);
+
+                // Fetch Plans ONLY after verification
+                setFetchingPlans(true);
+                const plansRes = await fetch(`/api/vtu/plans?type=cable&service_id=${formData.cable_id}`);
+                const plansJson = await plansRes.json();
+                if (plansJson.success) {
+                    setAvailablePlans(plansJson.data);
+                    setStep(2);
+                } else {
+                    throw new Error(plansJson.error || 'Failed to fetch packages');
+                }
             } else {
                 throw new Error(data.error || 'Verification failed');
             }
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message });
-            if (process.env.NODE_ENV === 'development') {
-                setFormData(prev => ({ ...prev, customer_name: 'Test Cable User' }));
-                setStep(2);
-            }
         } finally {
             setVerifying(false);
+            setFetchingPlans(false);
         }
     };
 

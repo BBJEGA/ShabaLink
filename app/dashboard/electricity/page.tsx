@@ -28,10 +28,12 @@ export default function ElectricityPage() {
     });
 
     useEffect(() => {
-        // Fetch Discos on mount
+        // Fetch Discos on mount from Variations API
         fetch('/api/vtu/plans?type=electricity')
             .then(res => res.json())
-            .then(json => { if (json.success) setDiscos(json.data); });
+            .then(json => {
+                if (json.success) setDiscos(json.data);
+            });
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

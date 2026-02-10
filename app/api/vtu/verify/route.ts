@@ -11,18 +11,12 @@ export async function POST(request: Request) {
         }
 
         let data;
-        if (type === 'electricity') {
-            // params: { disco_id, meter_number, meter_type }
-            data = await isquare.verifyElectricity({
-                disco_id: params.disco_id,
-                meter_number: params.meter_number,
-                meter_type: params.meter_type
-            });
-        } else if (type === 'cable') {
-            // params: { cable_id, smartcard }
-            data = await isquare.verifySmartcard({
-                cable_id: params.cable_id,
-                smartcard: params.smartcard
+        if (type === 'electricity' || type === 'cable') {
+            const apiType = type === 'cable' ? 'tv' : type;
+            data = await isquare.verifyCustomer({
+                service_id: params.disco_id || params.cable_id,
+                customer_id: params.meter_number || params.smartcard,
+                type: apiType
             });
         } else {
             return NextResponse.json({ error: 'Invalid verification type' }, { status: 400 });

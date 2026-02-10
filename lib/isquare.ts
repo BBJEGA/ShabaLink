@@ -25,27 +25,21 @@ export class ISquareClient {
     }
 
     private async request(endpoint: string, method: 'GET' | 'POST', body?: any): Promise<APIResponse> {
-        if (!this.apiKey) {
-            console.warn('ISQUARE_API_KEY is missing.');
-            // We do not throw immediately to allow for potential mock handling if configured elsewhere, 
-            // but for this "Strict" version we assume keys are present or it will fail at fetch.
-        }
-
         const url = `${this.baseUrl}${endpoint}`;
-        const headers = {
-            // Standard Auth Construction
-            // If Username/Password env vars exist, use Basic Auth
-            // Else if API Key exists, try Bearer or Basic with Key
-            'Authorization': '',
+        const headers: any = {
             'Content-Type': 'application/json',
         };
 
-        if (process.env.ISQUARE_USERNAME && process.env.ISQUARE_PASSWORD) {
-            const credentials = Buffer.from(`${process.env.ISQUARE_USERNAME}:${process.env.ISQUARE_PASSWORD}`).toString('base64');
-            headers['Authorization'] = `Basic ${credentials}`;
-        } else if (process.env.ISQUARE_API_KEY) {
-            // Fallback: Some APIs use "Token <key>" or "Bearer <key>"
-            // Using Bearer as common standard if no specific info
+        // Use api-key and secret-key headers as requested
+        if (process.env.ISQUARE_API_KEY) {
+            headers['api-key'] = process.env.ISQUARE_API_KEY;
+        }
+        if (process.env.ISQUARE_SECRET_KEY) {
+            headers['secret-key'] = process.env.ISQUARE_SECRET_KEY;
+        }
+
+        // Add Fallback Bearer if needed
+        if (!headers['api-key'] && process.env.ISQUARE_API_KEY) {
             headers['Authorization'] = `Bearer ${process.env.ISQUARE_API_KEY}`;
         }
 
@@ -59,13 +53,13 @@ export class ISquareClient {
             const data = await response.json();
 
             if (!response.ok) {
-                // Return structured error
+                console.error(`ISquare API Error [${endpoint}] Status ${response.status}:`, data);
                 throw new Error(data.message || data.error || `API Error: ${response.status}`);
             }
 
             return data;
         } catch (error: any) {
-            console.error(`ISquare API Error [${endpoint}]:`, error);
+            console.error(`ISquare API Exception [${endpoint}]:`, error);
             throw new Error(error.message || 'Connection to provider failed');
         }
     }
@@ -105,16 +99,31 @@ export class ISquareClient {
         return await this.request('/data/', 'GET');
     }
 
-    // --- SERVICES & PLANS ---
+    // --- V2 VARIATIONS & SYNC ---
+    async getVariations(type: 'data' | 'tv' | 'electricity', serviceId?: string) {
+        let endpoint = `/v2/variations/${type}`;
+        if (serviceId) endpoint += `?service_id=${serviceId}`;
+        return this.request(endpoint, 'GET');
+    }
+
+    async verifyCustomer(params: { service_id: string; customer_id: string; type: 'tv' | 'electricity' }) {
+        return this.request('/v2/verify-customer/', 'POST', {
+            service_id: params.service_id,
+            customer_id: params.customer_id,
+            type: params.type
+        });
+    }
+
+    // --- SERVICES & PLANS (LEGACY/FALLBACK) ---
     async getServices(type: 'data' | 'cable' | 'electricity') {
         try {
             switch (type) {
                 case 'data':
-                    return await this.request('/data/', 'GET');
+                    return await this.request('/v2/variations/data', 'GET');
                 case 'cable':
-                    return await this.request('/tv/', 'GET'); // Adjusted endpoint
+                    return await this.request('/v2/variations/tv', 'GET');
                 case 'electricity':
-                    return await this.request('/electricity/', 'GET'); // Adjusted endpoint
+                    return await this.request('/v2/variations/electricity', 'GET');
                 default:
                     return [];
             }

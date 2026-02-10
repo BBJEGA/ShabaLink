@@ -6,16 +6,11 @@ import { calculateVtuPrice, ServiceType, UserTier } from '@/utils/pricing';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type') as ServiceType;
-
-    if (!['data', 'cable', 'electricity'].includes(type)) {
-        return NextResponse.json({ error: 'Invalid service type' }, { status: 400 });
-    }
+    const serviceId = searchParams.get('service_id');
 
     const supabase = await createClient();
 
     // 1. Get User Tier
-    // We default to 'smart' if not logged in or no profile found
     let userTier: UserTier = 'smart';
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -32,23 +27,24 @@ export async function GET(request: Request) {
     }
 
     try {
-        // 2. Fetch Base Plans from Provider
-        const response = await isquare.getServices(type as any);
-        const plans = Array.isArray(response) ? response : (response.data || []);
-
+        // 2. Fetch Base Plans from Provider V2 Variations
+        const apiType = type === 'cable' ? 'tv' : (type as any);
+        const response = await isquare.getVariations(apiType, serviceId || undefined);
+        const plans = Array.isArray(response) ? response : (response.data || response.variations || []);
 
         // 3. Apply Pricing Logic
         const pricedPlans = plans.map((plan: any) => {
-            // Basic amount check. Some APIs return string, some number.
-            const cost = Number(plan.amount) || 0;
-            if (cost === 0) return plan; // No price to calculate (e.g. valid-only check)
+            const cost = Number(plan.amount || plan.price || plan.cost) || 0;
+            if (cost === 0) return plan;
 
             const pricing = calculateVtuPrice(cost, type, userTier);
 
             return {
                 ...plan,
+                id: plan.id || plan.variation_id || plan.variation_code,
+                name: plan.name || plan.variation_name,
                 amount: pricing.sellingPrice,
-                original_amount: pricing.costPrice, // Optional: for debugging or strikethrough
+                original_amount: pricing.costPrice,
                 tier_applied: pricing.appliedTier
             };
         });
@@ -56,7 +52,7 @@ export async function GET(request: Request) {
         return NextResponse.json({
             success: true,
             data: pricedPlans,
-            debug_raw: response // Temperory for debugging missing plans
+            debug_raw: response
         });
 
     } catch (error: any) {

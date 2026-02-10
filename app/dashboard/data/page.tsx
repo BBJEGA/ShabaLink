@@ -29,46 +29,30 @@ export default function BuyDataPage() {
         amount: 0 // Will store the SELLING PRICE
     });
 
-    // 1. Fetch Plans on Load
-    useEffect(() => {
-        const fetchPlans = async () => {
-            setFetchingPlans(true);
-            try {
-                const res = await fetch('/api/vtu/plans?type=data');
-                const json = await res.json();
-                if (json.success) {
-                    setAllPlans(json.data);
-                    // Extract unique networks from plans if possible
-                    if (json.data.length > 0) {
-                        const uniqueNets = Array.from(new Set(json.data.map((p: any) => p.network_name || p.network || p.network_id)));
-                        console.log('Detected Networks from API:', uniqueNets);
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to fetch plans", e);
-                setMessage({ type: 'error', text: 'Failed to load plans.' });
-            } finally {
-                setFetchingPlans(false);
-            }
-        };
-        fetchPlans();
-    }, []);
-
-    const handleNetworkSelect = (id: string) => {
+    // 1. Fetch Plans on demand when network is selected
+    const handleNetworkSelect = async (id: string) => {
         setFormData(prev => ({ ...prev, network_id: id, plan_id: '' }));
+        setFetchingPlans(true);
+        setAvailablePlans([]);
+        setMessage({ type: '', text: '' });
 
-        // Robust filtering: check network name or ID (both string/num)
-        const selectedNet = NETWORKS.find(n => n.id === id);
-        const filtered = allPlans.filter(p => {
-            const planNetId = String(p.network_id || p.network);
-            const planNetName = String(p.network_name || p.network || '').toUpperCase();
-
-            // Match by ID or Name (e.g. "MTN" matches "MTN DATASHARE")
-            return planNetId === String(id) ||
-                (selectedNet && planNetName.includes(selectedNet.name.toUpperCase()));
-        });
-
-        setAvailablePlans(filtered);
+        try {
+            const res = await fetch(`/api/vtu/plans?type=data&service_id=${id}`);
+            const json = await res.json();
+            if (json.success) {
+                setAvailablePlans(json.data);
+                if (json.data.length === 0) {
+                    setMessage({ type: 'error', text: 'No plans available for this network at the moment.' });
+                }
+            } else {
+                setMessage({ type: 'error', text: json.error || 'Failed to fetch plans' });
+            }
+        } catch (e) {
+            console.error("Failed to fetch plans", e);
+            setMessage({ type: 'error', text: 'Connection error. Please try again.' });
+        } finally {
+            setFetchingPlans(false);
+        }
     };
 
     const handlePlanSelect = (plan: any) => {

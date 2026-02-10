@@ -97,7 +97,7 @@ export default async function Dashboard() {
                             <div className="lg:col-span-1">
                                 {profile?.account_number ? (
                                     <BankDetails
-                                        accountName={profile.account_name || profile.full_name}
+                                        accountName={`Shabalink - ${profile.full_name}`}
                                         accountNumber={profile.account_number}
                                         bankName={profile.bank_name || 'PALMPAY'}
                                     />
