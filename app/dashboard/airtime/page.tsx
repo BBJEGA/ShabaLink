@@ -23,9 +23,6 @@ export default function BuyAirtimePage() {
 
     // Computed Logic
     const amount = Number(formData.amount) || 0;
-    // Client-side estimation of price (Cost + 3% roughly, backend is authority)
-    // We show "You pay approx..."
-    const estimatedCost = (amount * 1.03).toFixed(2);
 
     const handleNetworkSelect = (id: string) => {
         setFormData(prev => ({ ...prev, network_id: id }));
@@ -128,8 +125,8 @@ export default function BuyAirtimePage() {
                                                 type="button"
                                                 onClick={() => handleNetworkSelect(net.id)}
                                                 className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${formData.network_id === net.id
-                                                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                                        : 'border-gray-100 hover:border-gray-200 text-gray-500'
+                                                    ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                                    : 'border-gray-100 hover:border-gray-200 text-gray-500'
                                                     }`}
                                             >
                                                 <Smartphone size={20} strokeWidth={2.5} />
@@ -190,21 +187,20 @@ export default function BuyAirtimePage() {
                                     <div className="text-sm text-gray-500">Airtime Top-up • {NETWORKS.find(n => n.id === formData.network_id)?.name}</div>
                                 </div>
 
-                                <div className="bg-blue-50 p-5 rounded-2xl space-y-3">
+                                <div className="bg-blue-50 p-5 rounded-2xl space-y-3 font-medium">
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">Number</span>
+                                        <span className="text-gray-500 font-semibold uppercase tracking-wider text-[10px]">Recipient Number</span>
                                         <span className="font-bold text-gray-800">{formData.phone}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">Provider Cost</span>
-                                        <span className="font-bold text-gray-800">₦{amount}</span>
+                                        <span className="text-gray-500 font-semibold uppercase tracking-wider text-[10px]">Network</span>
+                                        <span className="font-bold text-gray-800">{NETWORKS.find(n => n.id === formData.network_id)?.name}</span>
                                     </div>
                                     <div className="h-px bg-blue-200"></div>
-                                    <div className="flex justify-between text-base">
-                                        <span className="text-blue-800 font-bold">Total Pay</span>
-                                        <span className="font-black text-blue-800">₦{estimatedCost}</span>
+                                    <div className="flex justify-between text-lg">
+                                        <span className="text-blue-800 font-bold uppercase tracking-widest text-xs">Total Amount</span>
+                                        <span className="font-black text-blue-800">₦{amount.toFixed(2)}</span>
                                     </div>
-                                    <p className="text-[10px] text-blue-400 text-right">*Includes profit markup</p>
                                 </div>
 
                                 <div>

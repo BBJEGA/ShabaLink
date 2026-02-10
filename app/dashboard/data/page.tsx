@@ -17,6 +17,8 @@ export default function BuyDataPage() {
     // Data
     const [allPlans, setAllPlans] = useState<any[]>([]);
     const [availablePlans, setAvailablePlans] = useState<any[]>([]);
+    const [networks, setNetworks] = useState<any[]>(NETWORKS); // Initial list
+    const [fetching, setFetching] = useState(false);
 
     // Form
     const [formData, setFormData] = useState({
@@ -36,10 +38,15 @@ export default function BuyDataPage() {
                 const json = await res.json();
                 if (json.success) {
                     setAllPlans(json.data);
+                    // Extract unique networks from plans if possible
+                    if (json.data.length > 0) {
+                        const uniqueNets = Array.from(new Set(json.data.map((p: any) => p.network_name || p.network || p.network_id)));
+                        console.log('Detected Networks from API:', uniqueNets);
+                    }
                 }
             } catch (e) {
                 console.error("Failed to fetch plans", e);
-                setMessage({ type: 'error', text: 'Failed to load plans. Please refresh.' });
+                setMessage({ type: 'error', text: 'Failed to load plans.' });
             } finally {
                 setFetchingPlans(false);
             }
@@ -50,17 +57,17 @@ export default function BuyDataPage() {
     const handleNetworkSelect = (id: string) => {
         setFormData(prev => ({ ...prev, network_id: id, plan_id: '' }));
 
-        // Debugging: Log all plans to see structure
-        console.log('All Plans:', allPlans);
-
-        // Filter plans by network (handle string/number mismatch)
-        // API might return 'network_id' as "1" or 1.
+        // Robust filtering: check network name or ID (both string/num)
+        const selectedNet = NETWORKS.find(n => n.id === id);
         const filtered = allPlans.filter(p => {
-            const planNetId = p.network || p.network_id;
-            return String(planNetId) === String(id);
+            const planNetId = String(p.network_id || p.network);
+            const planNetName = String(p.network_name || p.network || '').toUpperCase();
+
+            // Match by ID or Name (e.g. "MTN" matches "MTN DATASHARE")
+            return planNetId === String(id) ||
+                (selectedNet && planNetName.includes(selectedNet.name.toUpperCase()));
         });
 
-        console.log('Filtered Plans for Network', id, ':', filtered);
         setAvailablePlans(filtered);
     };
 

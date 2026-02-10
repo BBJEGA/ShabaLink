@@ -123,7 +123,11 @@ export default function ElectricityPage() {
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Provider</label>
                                     <select name="disco_id" value={formData.disco_id} onChange={handleChange} className="w-full p-4 rounded-xl border border-gray-200 focus:ring-yellow-500" required>
                                         <option value="">Select Disco</option>
-                                        {discos.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                        {discos.map(d => (
+                                            <option key={d.id || d.service_id} value={d.id || d.service_id}>
+                                                {d.name || d.service_name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className="flex gap-4">

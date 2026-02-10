@@ -110,13 +110,11 @@ export class ISquareClient {
         try {
             switch (type) {
                 case 'data':
-                    return await this.getDataPlans();
+                    return await this.request('/data/', 'GET');
                 case 'cable':
-                    // Fetch Cable Packages
-                    return await this.request('/cable/', 'GET');
+                    return await this.request('/tv/', 'GET'); // Adjusted endpoint
                 case 'electricity':
-                    // Fetch Discos
-                    return await this.request('/electricity/', 'GET');
+                    return await this.request('/electricity/', 'GET'); // Adjusted endpoint
                 default:
                     return [];
             }

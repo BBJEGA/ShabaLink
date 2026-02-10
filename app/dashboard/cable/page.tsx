@@ -40,7 +40,7 @@ export default function CablePage() {
         setFormData(prev => ({ ...prev, [name]: value }));
 
         if (name === 'cable_id') {
-            const filtered = allPlans.filter(p => p.cable_id === value);
+            const filtered = allPlans.filter(p => (p.cable_id || p.service_id) === value);
             setAvailablePlans(filtered);
             setFormData(prev => ({ ...prev, plan_id: '', cable_id: value }));
         }
@@ -121,17 +121,19 @@ export default function CablePage() {
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Provider</label>
                                     <select name="cable_id" value={formData.cable_id} onChange={handleChange} className="w-full p-4 rounded-xl border border-gray-200 focus:ring-purple-500" required>
                                         <option value="">Select Provider</option>
-                                        <option value="dstv">DSTV</option>
-                                        <option value="gotv">GOTV</option>
-                                        <option value="startimes">Startimes</option>
+                                        {/* Use specific list ideally, but here we fallback to unique IDs from allPlans */}
+                                        {Array.from(new Set(allPlans.map(p => p.cable_id || p.service_id))).map(id => {
+                                            const p = allPlans.find(pl => (pl.cable_id || pl.service_id) === id);
+                                            return <option key={id} value={id}>{p?.cable_name || p?.service_name || id.toUpperCase()}</option>
+                                        })}
                                     </select>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">IUC / Smartcard</label>
-                                    <input type="text" name="smartcard" value={formData.smartcard} onChange={handleChange} className="w-full p-4 rounded-xl border border-gray-200" required placeholder="Header No." />
+                                    <input type="text" name="smartcard" value={formData.smartcard} onChange={handleChange} className="w-full p-4 rounded-xl border border-gray-200" required placeholder="Smartcard No." />
                                 </div>
                                 <button type="submit" disabled={verifying || !formData.cable_id} className="w-full bg-purple-600 text-white p-4 rounded-2xl font-bold flex justify-center items-center gap-2">
-                                    {verifying ? <Loader2 className="animate-spin" /> : 'Verify IUC'} <ChevronRight size={18} />
+                                    {verifying ? <Loader2 className="animate-spin" /> : 'Verify Smartcard'} <ChevronRight size={18} />
                                 </button>
                             </form>
                         )}
@@ -147,9 +149,11 @@ export default function CablePage() {
                                 <div>
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Select Package</label>
                                     <select name="plan_id" onChange={handlePlanSelect} className="w-full p-4 rounded-xl border border-gray-200" required>
-                                        <option value="">Select...</option>
+                                        <option value="">Select Package...</option>
                                         {availablePlans.map(p => (
-                                            <option key={p.id} value={p.id}>{p.name} - ₦{p.amount}</option>
+                                            <option key={p.id || p.plan_id} value={p.id || p.plan_id}>
+                                                {p.name || p.plan_name} - ₦{p.amount}
+                                            </option>
                                         ))}
                                     </select>
                                     <p className="text-xs text-gray-400 mt-2">Plus ₦100 Service Fee</p>
