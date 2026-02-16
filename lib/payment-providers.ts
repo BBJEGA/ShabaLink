@@ -63,7 +63,7 @@ export async function createStrowalletAccount(user: CreateVirtualAccountParams) 
             account_name: data.account_name,
             bank_name: data.bank_name || 'Palmpay'
         };
-    } catch (error: any) {
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
         console.error('Strowallet API Error:', error);
         throw new Error(error.message);
     }

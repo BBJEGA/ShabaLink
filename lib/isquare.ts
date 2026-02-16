@@ -11,7 +11,7 @@ const ISQUARE_API_BASE = 'https://isquaredata.com/api';
 interface APIResponse {
     status: string | boolean;
     message?: string;
-    [key: string]: unknown;
+    [key: string]: any;
 }
 
 export class ISquareClient {
@@ -116,7 +116,7 @@ export class ISquareClient {
     }
 
     // --- SERVICES & PLANS (LEGACY/FALLBACK) ---
-    async getServices(type: 'data' | 'cable' | 'electricity') {
+    async getServices(type: 'data' | 'cable' | 'electricity'): Promise<any> {
         try {
             switch (type) {
                 case 'data':

@@ -14,7 +14,7 @@ export default function ElectricityPage() {
     const [message, setMessage] = useState({ type: '', text: '' });
 
     // Data
-    const [discos, setDiscos] = useState<Record<string, unknown>[]>([]);
+    const [discos, setDiscos] = useState<any[]>([]);
 
     // Form
     const [formData, setFormData] = useState({
