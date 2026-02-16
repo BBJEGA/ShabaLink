@@ -41,10 +41,24 @@ export async function GET(request: Request) {
         // If type is data, we expect serviceId (network_id) to match
         let distinctPlans = plans;
         if (type === 'data' && serviceId) {
-            // Try to filter by network if the field exists
-            const filtered = plans.filter((p: any) =>
-                String(p.network || p.network_id || p.service_id) === String(serviceId)
-            );
+            const { NETWORKS } = require('@/lib/isquare');
+            const networkName = NETWORKS.find((n: any) => n.id === serviceId)?.name?.toUpperCase();
+
+            // Filter logic:
+            // 1. Strict ID match (if field exists)
+            // 2. Fuzzy Name match (if plan name contains 'MTN', etc)
+            const filtered = plans.filter((p: any) => {
+                const pNetworkId = String(p.network || p.network_id || p.service_id || '');
+                const pName = String(p.name || p.variation_name || '').toUpperCase();
+
+                const idMatch = pNetworkId === String(serviceId);
+                const nameMatch = networkName ? pName.includes(networkName) : false;
+
+                // If the plan has a explicit network ID, trust it.
+                // If not, rely on name match.
+                return pNetworkId ? idMatch : nameMatch;
+            });
+
             if (filtered.length > 0) {
                 distinctPlans = filtered;
             }
@@ -58,7 +72,10 @@ export async function GET(request: Request) {
                 plan.amount ||
                 plan.price ||
                 plan.cost ||
-                plan.rate
+                plan.price ||
+                plan.cost ||
+                plan.rate ||
+                plan.api_price
             ) || 0;
 
             if (cost === 0) return plan; // Or skip?
