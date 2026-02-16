@@ -15,12 +15,9 @@ export default function BuyDataPage() {
     const [message, setMessage] = useState({ type: '', text: '' });
 
     // Data
-    const [availablePlans, setAvailablePlans] = useState<Record<string, any>[]>([]);
-    // We use any for plan objects because they vary widely by provider, 
-    // but the array itself is typed. Actually let's use Record<string, unknown> if possible.
-    // However, plan.id and plan.amount are used.
-    // For now, let's use a simple interface or stay with what works.
-
+    const [allPlans, setAllPlans] = useState<any[]>([]);
+    const [planTypes, setPlanTypes] = useState<string[]>([]);
+    const [selectedType, setSelectedType] = useState<string>('');
 
     // Form
     const [formData, setFormData] = useState({
@@ -31,20 +28,38 @@ export default function BuyDataPage() {
         amount: 0 // Will store the SELLING PRICE
     });
 
+    // Helper: Categorize Plan Name
+    const getPlanType = (name: string) => {
+        const n = name.toUpperCase();
+        if (n.includes('SME')) return 'SME';
+        if (n.includes('CORPORATE') || n.includes('CG')) return 'CORPORATE';
+        if (n.includes('GIFTING')) return 'GIFTING';
+        if (n.includes('AWOOF')) return 'AWOOF';
+        return 'NORMAL'; // Fallback
+    };
+
     // 1. Fetch Plans on demand when network is selected
     const handleNetworkSelect = async (id: string) => {
-        setFormData(prev => ({ ...prev, network_id: id, plan_id: '' }));
+        setFormData(prev => ({ ...prev, network_id: id, plan_id: '', amount: 0 }));
+        setSelectedType('');
         setFetchingPlans(true);
-        setAvailablePlans([]);
+        setAllPlans([]);
+        setPlanTypes([]);
         setMessage({ type: '', text: '' });
 
         try {
             const res = await fetch(`/api/vtu/plans?type=data&service_id=${id}`);
             const json = await res.json();
             if (json.success) {
-                setAvailablePlans(json.data);
-                if (json.data.length === 0) {
+                const plans = json.data;
+                setAllPlans(plans);
+
+                if (plans.length === 0) {
                     setMessage({ type: 'error', text: 'No plans available for this network at the moment.' });
+                } else {
+                    // Extract unique types
+                    const types = Array.from(new Set(plans.map((p: any) => getPlanType(p.name)))).sort();
+                    setPlanTypes(types as string[]);
                 }
             } else {
                 setMessage({ type: 'error', text: json.error || 'Failed to fetch plans' });
@@ -57,8 +72,15 @@ export default function BuyDataPage() {
         }
     };
 
+    const handleTypeSelect = (type: string) => {
+        setSelectedType(type);
+        setFormData(prev => ({ ...prev, plan_id: '', amount: 0 }));
+    };
+
     const handlePlanSelect = (plan: any) => {
         setFormData(prev => ({ ...prev, plan_id: plan.id, amount: plan.amount }));
+        // Automatically go to next step after selecting plan? 
+        // Or keep "Next Step" button. Keeping button is safer for UX.
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,9 +91,19 @@ export default function BuyDataPage() {
         e.preventDefault();
         setMessage({ type: '', text: '' });
 
-        if (step === 1 && (!formData.network_id || !formData.plan_id)) {
-            setMessage({ type: 'error', text: 'Select a network and plan' });
-            return;
+        if (step === 1) {
+            if (!formData.network_id) {
+                setMessage({ type: 'error', text: 'Select a network' });
+                return;
+            }
+            if (!selectedType && planTypes.length > 0) {
+                setMessage({ type: 'error', text: 'Select a plan type' });
+                return;
+            }
+            if (!formData.plan_id) {
+                setMessage({ type: 'error', text: 'Select a data plan' });
+                return;
+            }
         }
         if (step === 2 && !formData.phone) {
             setMessage({ type: 'error', text: 'Enter phone number' });
@@ -105,6 +137,8 @@ export default function BuyDataPage() {
         }
     };
 
+    // Filter available plans based on selected type
+    const filteredPlans = allPlans.filter(p => getPlanType(p.name) === selectedType);
 
     return (
         <div className="min-h-screen bg-green-50/30 pb-20 font-sans">
@@ -139,10 +173,10 @@ export default function BuyDataPage() {
                             </div>
                         )}
 
-                        {/* STEP 1: NETWORK & PLAN */}
+                        {/* STEP 1: NETWORK & PLAN SELECTION */}
                         {step === 1 && (
                             <div className="space-y-6">
-                                {/* Network */}
+                                {/* 1. Network */}
                                 <div>
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Select Network</label>
                                     <div className="grid grid-cols-4 gap-3">
@@ -162,39 +196,58 @@ export default function BuyDataPage() {
                                     </div>
                                 </div>
 
-                                {/* Plans */}
-                                {formData.network_id && (
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Available Plans</label>
+                                {/* 2. Plan Type (Dynamic) */}
+                                {formData.network_id && !fetchingPlans && planTypes.length > 0 && (
+                                    <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Select Plan Type</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {planTypes.map((type) => (
+                                                <button
+                                                    key={type}
+                                                    onClick={() => handleTypeSelect(type)}
+                                                    className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${selectedType === type
+                                                        ? 'border-green-600 bg-green-50 text-green-700'
+                                                        : 'border-gray-100 text-gray-500 hover:border-gray-200'
+                                                        }`}
+                                                >
+                                                    {type}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
-                                        {fetchingPlans ? (
-                                            <div className="flex justify-center p-8"><Loader2 className="animate-spin text-green-600" /></div>
-                                        ) : availablePlans.length === 0 ? (
-                                            <div className="text-center text-gray-400 py-8">No plans available</div>
-                                        ) : (
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {availablePlans.map((plan) => (
-                                                    <button
-                                                        key={plan.id}
-                                                        onClick={() => handlePlanSelect(plan)}
-                                                        className={`p-4 rounded-2xl border text-left transition-all ${formData.plan_id === plan.id
-                                                            ? 'border-green-500 bg-green-50 ring-1 ring-green-500'
-                                                            : 'border-gray-100 hover:border-green-200 bg-gray-50/50'
-                                                            }`}
-                                                    >
-                                                        <div className="font-bold text-gray-800 text-sm">{plan.name}</div>
-                                                        <div className="text-green-600 font-bold mt-1">₦{plan.amount}</div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
+                                {/* Loading State */}
+                                {fetchingPlans && (
+                                    <div className="flex justify-center p-8"><Loader2 className="animate-spin text-green-600" /></div>
+                                )}
+
+                                {/* 3. Available Bundles */}
+                                {selectedType && (
+                                    <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Available Bundles</label>
+                                        <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                                            {filteredPlans.map((plan) => (
+                                                <button
+                                                    key={plan.id}
+                                                    onClick={() => handlePlanSelect(plan)}
+                                                    className={`p-4 rounded-2xl border text-left transition-all ${formData.plan_id === plan.id
+                                                        ? 'border-green-500 bg-green-50 ring-1 ring-green-500'
+                                                        : 'border-gray-100 hover:border-green-200 bg-gray-50/50'
+                                                        }`}
+                                                >
+                                                    <div className="font-bold text-gray-800 text-sm">{plan.name.replace(selectedType, '').replace(NETWORKS.find(n => n.id === formData.network_id)?.name || '', '').trim()}</div>
+                                                    <div className="text-green-600 font-bold mt-1">₦{plan.amount}</div>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
                                 <button
                                     onClick={handleNext}
                                     disabled={!formData.plan_id}
-                                    className="w-full bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-transform active:scale-95 shadow-lg shadow-green-600/20 disabled:opacity-50 disabled:scale-100"
+                                    className="w-full bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-transform active:scale-95 shadow-lg shadow-green-600/20 disabled:opacity-50 disabled:scale-100 mt-4"
                                 >
                                     Next Step <ChevronRight size={18} />
                                 </button>
@@ -243,7 +296,8 @@ export default function BuyDataPage() {
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-500">Plan</span>
-                                        <span className="font-bold text-gray-800">{availablePlans.find(p => p.id === formData.plan_id)?.name}</span>
+                                        {/* Find plan in allPlans since filteredPlans might logically change if state resets, though safe here */}
+                                        <span className="font-bold text-gray-800">{allPlans.find(p => p.id === formData.plan_id)?.name}</span>
                                     </div>
                                     <div className="h-px bg-green-200"></div>
                                     <div className="flex justify-between text-base">
